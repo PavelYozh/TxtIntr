@@ -20,7 +20,7 @@ double toRadians(double degrees) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 3) { printHelp(); return 1; }
+    if (argc < 2) { printHelp(); return 1; }
 
     string operation;
     string operandStr;
@@ -43,18 +43,37 @@ int main(int argc, char* argv[]) {
 
     double operand;
     try { operand = stod(operandStr); }
-    catch (...) { cerr << "Ошибка: неверный формат числа\n"; return 1; }
+    catch (...) {
+		cerr << "Ошибка: неверный формат числа\n";
+		return 1;
+	}
 
     double val = inDegrees ? toRadians(operand) : operand;
     double result = 0;
 
-    if (operation == "tan") { result = tan(val); }
+    // Вычисляем sin и cos один раз — они нужны для обеих операций
+    double s = sin(val);
+    double c = cos(val);
+
+    if (operation == "tan") {
+        // tan(x) = sin(x) / cos(x): проверяем, не близок ли cos к нулю
+        if (std::abs(c) < 1e-10) {
+            cerr << "Ошибка: тангенс не определен\n";
+            return 1;
+        }
+        result = s / c;
+    }
     else if (operation == "cot") {
-        double t = tan(val);
-        if (abs(t) < 1e-10) { cerr << "Ошибка: котангенс не определен\n"; return 1; }
-        result = 1.0 / t;
-    } else {
-        cerr << "Ошибка: неизвестная операция (используйте tan или cot)\n"; return 1;
+        // cot(x) = cos(x) / sin(x): проверяем, не близок ли sin к нулю
+        if (std::abs(s) < 1e-10) {
+            cerr << "Ошибка: котангенс не определен\n";
+            return 1;
+        }
+        result = c / s;
+    }
+    else {
+        cerr << "Ошибка: неизвестная операция (используйте tan или cot)\n";
+        return 1;
     }
 
     cout << fixed << setprecision(6) << result << endl;
